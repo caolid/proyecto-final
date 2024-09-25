@@ -1,4 +1,4 @@
-Esta tesis se basa en la detección de transferencias bancarias fraudulentas. Tras un exhaustivo análisis exploratorio de los datos, apliqué diferentes algoritmos de machine learning
+Este trabajo de fin de curso se basa en la detección de transferencias bancarias fraudulentas. Tras un exhaustivo análisis exploratorio de los datos, apliqué diferentes algoritmos de machine learning
 y analicé su eficacia en el problema de clasificación.
 
 Cada observación de los datos es una transferencia bancaria, por lo que la mayoría de ellas son no fraudulentas, 
