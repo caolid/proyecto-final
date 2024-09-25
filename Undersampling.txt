@@ -1,0 +1,197 @@
+# PACKAGES
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+import imblearn
+from imblearn.under_sampling import RandomUnderSampler
+from numpy.random import seed
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.tree import DecisionTreeClassifier
+from imblearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectKBest 
+from sklearn.feature_selection import f_regression
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn import metrics
+import itertools
+from sklearn.metrics import roc_curve, auc
+from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
+
+# IMPORT DATA
+df=pd.read_csv('bs140513_032310.csv')
+df=df.drop(['zipMerchant', 'zipcodeOri'], axis=1)
+
+# DATA PRE-PROCESSING
+# Converting categorical variables into numerical
+col_categorical = df.select_dtypes(include= ['object']).columns
+for col in col_categorical:
+    df[col] = df[col].astype('category')
+df[col_categorical] = df[col_categorical].apply(lambda x: x.cat.codes)
+
+# INDEPENDENT AND RESPONSE VARIABLE
+X=df.drop('fraud', axis=1) # Independent (We drop the fraud column)
+y=df['fraud'] # Response (fraud column)
+
+# FUNCTION FOR PLOTTING ROC-AUC CURVE
+def plot_roc_auc(y_test, preds):
+    fpr, tpr, threshold = roc_curve(y_test, preds)
+    roc_auc = auc(fpr, tpr)
+    plt.title('Receiver Operating Characteristic', fontsize = 18)
+    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
+    plt.legend(loc = 'lower right')
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate', fontsize = 20)
+    plt.xlabel('False Positive Rate', fontsize = 20)
+    plt.show()
+    
+# FUNCTION TO PLOT THE CONFUSION MATRIX
+class_names=np.array(['0','1']) # Class = 1 (fraud), Class = 0 (non fraud)
+
+def plot_confusion_matrix(cm, classes,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title, fontsize = 22)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = 'd' 
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label', fontsize = 22)
+    plt.xlabel('Predicted label', fontsize = 22)
+    
+# SET SEED
+seed(71735164)
+
+# UNDERSAMPLING
+rus=RandomUnderSampler(random_state=42)
+X_us, y_us=rus.fit_resample(X, y)
+
+# SPLIT THE DATA INTO TRAIN AND TEST
+X_train, X_test, y_train, y_test = train_test_split(X_us,y_us,test_size=0.2)
+
+
+# K-NEAREST NEIGHBORS
+# Select k best
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5, random_state=1)
+selector=SelectKBest(f_regression)
+knn=KNeighborsRegressor()
+
+classif=Pipeline([
+('select', selector),
+('knn_regression', knn)])
+
+param_grid={'select__k': [1,2,3,4,5,6,7], 'knn_regression__n_neighbors': list(range(1,35,2))}
+
+clf_kbest = GridSearchCV(classif,
+param_grid,
+cv=cv , n_jobs=1, verbose=1)
+
+clf_kbest=clf_kbest.fit(X_train,y_train)
+print(clf_kbest.best_params_)
+
+# Most influential variables
+features_kbest=clf_kbest.best_estimator_.named_steps['select'].get_support()
+for i in range(7):
+    if features_kbest[i]==True:
+        print(list(df.columns)[i])
+
+# Evaluate the model
+knn = KNeighborsClassifier(n_neighbors=5,p=1)
+
+knn.fit(X_train,y_train)
+y_pred_KNN = knn.predict(X_test)
+
+scores=cross_val_score(knn, X_us, y_us, cv=cv)
+
+print("%0.5f accuracy with a standard deviation of %0.5f" % (scores.mean(), scores.std()))
+print("\n Classification Report for K-Nearest Neighbours: \n",
+      classification_report(y_test, y_pred_KNN))
+plot_roc_auc(y_test, knn.predict_proba(X_test)[:,1])
+
+cm = confusion_matrix(y_test, y_pred_KNN)
+plot_confusion_matrix(cm,class_names)
+
+
+# DECISION TREE CLASSIFIER
+cv1 = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=1)
+
+DT_clf = DecisionTreeClassifier(criterion = "gini", random_state=42, max_depth=None, min_samples_leaf=5)
+
+DT_clf.fit(X_train, y_train)
+
+y_pred_DT = DT_clf.predict(X_test)
+
+scores_DT=cross_val_score(DT_clf, X_us, y_us, cv=cv1)
+
+print("%0.5f accuracy with a standard deviation of %0.5f" % (scores_DT.mean(), scores_DT.std()))
+print("\n Classification Report for Random Forest Classifier: \n",
+      classification_report(y_test, y_pred_DT))
+plot_roc_auc(y_test, DT_clf.predict_proba(X_test)[:,1])
+
+cm = confusion_matrix(y_test, y_pred_DT)
+plot_confusion_matrix(cm,class_names)
+
+
+# RANDOM FOREST CLASSIFIER
+cv1 = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=1)
+
+rf_clf = RandomForestClassifier(n_estimators=300,max_depth=8,random_state=42,
+                                verbose=1,class_weight="balanced", n_jobs=-1)
+
+rf_clf.fit(X_train,y_train)
+y_pred_rf = rf_clf.predict(X_test)
+
+scores_rf=cross_val_score(rf_clf, X_us, y_us, cv=cv1)
+
+print("%0.5f accuracy with a standard deviation of %0.5f" % (scores_rf.mean(), scores_rf.std()))
+print("\n Classification Report for Random Forest Classifier: \n",
+      classification_report(y_test, y_pred_rf))
+plot_roc_auc(y_test, rf_clf.predict_proba(X_test)[:,1])
+
+cm = confusion_matrix(y_test, y_pred_rf)
+plot_confusion_matrix(cm,class_names)
+
+
+# XGBOOST CLASSIFIER
+v1 = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=1)
+
+xgb_clf = xgb.XGBClassifier(max_depth=6, learning_rate=0.003, n_estimators=486, 
+                                objective="binary:hinge", booster='gbtree', 
+                                n_jobs=-1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0, 
+                                subsample=0.9, colsample_bytree=0.9, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, 
+                                 base_score=0.5, random_state=42)
+
+xgb_clf.fit(X_train,y_train)
+
+y_pred_xgb =xgb_clf.predict(X_test)
+
+scores_xgb=cross_val_score(xgb_clf, X_us, y_us, cv=cv1)
+
+print("%0.5f accuracy with a standard deviation of %0.5f" % (scores_xgb.mean(), scores_xgb.std()))
+print("\n Classification Report for Random Forest Classifier: \n",
+      classification_report(y_test, y_pred_xgb))
+plot_roc_auc(y_test, xgb_clf.predict_proba(X_test)[:,1])
+
+cm = confusion_matrix(y_test, y_pred_xgb)
+plot_confusion_matrix(cm,class_names)
+
+
+
+
+

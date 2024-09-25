@@ -1,0 +1,43 @@
+# PACKAGES
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from numpy import mean
+
+# IMPORT DATA
+df=pd.read_csv('bs140513_032310.csv')
+df=df.drop(['zipMerchant', 'zipcodeOri'], axis=1)
+
+# COUNTPLOT
+sns.countplot(x='fraud', hue = 'fraud', dodge = False, data=df)
+plt.title('Count of Fraudulent Payments')
+plt.xlabel('Fraud', fontsize=13)
+plt.ylabel('Count', fontsize=13)
+plt.legend(['Fraud','Non-Fraud'], loc = 'upper right')
+plt.show()
+
+# AVERAGE EXPENDITURES AND PERCENTAGE OF FRUAD BY CATEGORY, GENDER AND AGE
+print("Mean feature values per category",df.groupby('category')['amount','fraud'].mean())
+print("Mean feature values per age",df.groupby('age')['amount','fraud'].mean())
+print("Mean feature values per gender",df.groupby('gender')['amount','fraud'].mean())
+
+
+# BOXPLOT AMOUNT VS CATEGORY
+plt.figure(figsize=(30,10))
+sns.boxplot(x=df.category,y=df.amount)
+plt.title("Boxplot for the amount spend in each category", fontsize = 40)
+plt.ylim(0,4000)
+plt.ylabel('Count', fontsize = 40)
+plt.xlabel('Category', fontsize = 40)
+plt.show()
+
+# SCATTER PLOT
+df_fraud = df.loc[df.fraud==1]
+plt.figure(figsize=(15,10))
+plt.scatter(df_fraud['step'], df_fraud['amount']) 
+plt.title('Scatter plot amount fraud', fontsize = 30)
+plt.xlabel('Step', fontsize = 30)
+plt.ylabel('Amount', fontsize = 30)
+plt.xlim([0,185])
+plt.ylim([0,9000])
+plt.show()
