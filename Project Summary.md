@@ -445,4 +445,6 @@ As to which type of sampling is better, we have the failure rate using Undersamp
 
 At this point, we can say that the failure rate is good, but it could have been better if K-NN had worked in a more optimal way. This algorithm clearly fails in predicting frauds, having a failure rate in both samples higher than 10%, which is not bad at all, but it is certainly much worse than in the other algorithms, where the highest failure rate in predicting ones is 2.76% in XGBoost using Over-and-Undersampling.
 
+Deep Learning
 
+TO BE CONTINUED...
