@@ -190,8 +190,8 @@ After doing the preprocessing explained in chapter 3, our next step is to do an 
 
 We now have our balanced response variable and can start with the model. First, we would like to define the concept of cross-validation, as we will use it throughout the project. Cross-validation is a technique usually used in machine learning to assess the variability of a data set and the reliability of any model trained on it. This is how it works:
   1.	Cross-validation randomly divides the training data into folds, let’s say 5.
-  2.	The component reserves the data from fold 1 for use in validation and uses the remaining folds to train a model. It generates five models, trains each model      on four fifths of the data, and tests each model on the remaining fifth.
-  3.	During testing of the component for each fold, the module evaluates various accuracy statistics. The statistics used by the component depend on the type of       model being evaluated.
+  2.	The component reserves the data from fold 1 for use in validation and uses the remaining folds to train a model. It generates five models, trains each 		model      on four fifths of the data, and tests each model on the remaining fifth.
+  3.	During testing of the component for each fold, the module evaluates various accuracy statistics. The statistics used by the component depend on the type 	of       model being evaluated.
   4.	When the compilation and evaluation process is completed for all folds, the crossvalidation model generates a set of yield metrics and scored results for         all data.
 
 For this case of K-NN using Undersampling, we will consider a stratified crossvalidation of 10 folds in 5 repeats, using the function RepeatedStratifiedKFold from the sklearn.model_selection package. The fact that it is stratified ensures that each fold of the data has the same proportion of observations with a given label.
@@ -202,4 +202,126 @@ These are:
   •	Features = 4: Gender, Merchant, Category and Amount.
 
 We now have the K, all that remains is to run the model and evaluate it on the test data. Once this is done we get an accuracy of 0.922 with a standard deviation of 0.007. The classification report of the model, the confusion matrix and the ROC-AUC curve are shown below.
+
+			Precision	Recall	f1-Score	Support
+0			0.89		0.97	0.93		1455
+1			0.96		0.88	0.92		1425
+Accuracy					0.92		2880
+Macro Average		0.93		0.92	0.92		2880
+Weighted Average	0.93		0.92	0.92		2880
+
+Fig.  ROC-AUC Curve K-NN (Undersampling)		Fig. Confusion Matrix K-NN (Undersampling)
+
+
+![image](https://github.com/user-attachments/assets/6e418bb8-f184-4cda-a886-b75044715859)
+
+
+K-NN with Over-and-Undersampling
+
+Having seen how K-NN works with Undersampling, let’s now see if the results are improved by applying a combination of Over-and-Undersampling (in this case, for all algorithms, the division into train and test shall be done before sampling). To do this, we will use the Pipeline function from the imblearn.pipeline package. For the Undersampling we will use the aforementioned function, and the Oversampling will be done with the SMOTE function from the imblearn.over_sampling package. Within the pipeline we will include these two sampling and the K-NN model. This works as follows:
+
+	1.	Apply SMOTE to give give the minority class 5% of the size of the majority class.
+	2.	Using RandomUnderSampler we reduce the majority class to 50% more than the minority class.
+ 
+In this case, due to the large number of observations we have, we will use a crossvalidation of 5 folds and 3 repeats. After running the Pipeline, we get an accuracy of 0.942 with a standard deviation of 0.004 (a bit better than in the Undersampling section).
+
+As before, we show the classification report of the model, the confusion matrix and the ROC-AUC curve.
+
+TABLE CLASSIFICATION REPORT FOR K-NEAREST NEIGHBOURS (OVER-AND-UNDERSAMPLING)
+
+			Precision	Recall	f1-Score	Support
+0			1.00		0.97	0.98		117461
+1			0.26		0.87	0.40		1468
+Accuracy					0.97		118929
+Macro Average		0.63		0.92	0.69		118929
+Weighted Average	0.99		0.97	0.98		118929
+
+
+Fig. ROC-AUC Curve K-NN	(Over-and-Undersampling)	Fig. Confusion Matrix K-NN (Over-and-Undersampling)
+
+![image](https://github.com/user-attachments/assets/6cf2f864-8a61-4dcc-bbf3-17654163380f)
+
+Once we have the two results, let’s compare them. First, the metric we must look at is recall. As you can see in the tables, the recall is the same for the majority class and almost the same for the minority class. The objective of this work was fraud detection, so what we are really interested in is the percentage of failure in the ones, that is, what percentage of the total number of frauds that are classified are predicted as zeros. The following table shows the percentage of failure in both zeros and ones and both Undersampling and Over-and-Undersampling.
+
+TABLE PERCENTAGE OF FAILURE IN K-NN
+
+Class	Undersampling	Over-and-Undersampling
+0	3.44%		3.10%
+1	11.86%		12.87%
+
+The failure rate for ones is better in Undersampling, but the failure rate for zeros is somewhat worse. Anyway, since what we are interested in are the ones, and the difference in the failure rate for the zeros is minimal, we can conclude that in this case by Undersampling we obtain more favourable results.
+
+Decision Tree Classifier
+
+The next algorithm we are going to apply is Decision Trees. These are predictive models made up of binary rules that distribute the observations according to their attributes and thus predict the value of the response variable. Statistical and machine learning methods based on trees encompass a set of supervised non-parametric techniques that segment the space of predictors into simple regions, within which it is easier to handle interactions.
+These are their main advantages.
+
+•	Trees are easy to interpret even when the relationships between predictors are complex.
+•	Trees can, in theory, handle both numerical and categorical predictors without having to create dummy variables.
+•	They generally require much less data cleaning and pre-processing compared to other statistical learning methods (i.e., they do not require 			standardization).
+•	They can select predictors automatically.
+•	They can be applied to both regression and classification problems.
+
+In this paper we will deal with classification trees, which are the subtype of decision trees that we apply when the response variable is categorical. In general terms, in the training of a classification tree, the observations are distributed through nodes generating the structure of the tree until a terminal node is reached. When a new observation is to be predicted, the tree is traversed according to the value of its predictors until one of the terminal nodes is reached. The training process in a classification tree is divided into two stages.
+
+•	Successive partitioning of the predictor space generating terminal nodes (nonoverlapping regions). If these regions are limited to multi-dimensional 		rectangular regions, the construction process is simplified.
+•	Prediction of the response variable in each region.
+
+Despite the simplicity with which the process of constructing a tree can be summarized, it is necessary to establish a methodology to create the regions R1,R2,R3,...Rj or, equivalently, to decide where the divisions are introduced: in which predictors and in which values of the predictors. The method that is used to construct a classification tree is recursive binary splitting. This solution follows the same idea as stepwise predictor selection in multiple linear regression, it does not evaluate all possible regions but achieves a good computational-outcome balance.
+
+The aim of this method is to find in each iteration the predictor Xj and the cut-off point s such that, if the observations are distributed in the regions {X|Xj < s} and {X|Xj ≥ s}, the greatest possible reduction of the method we use to find the most homogeneous nodes possible is achieved. The most used methods for the selection of optimal splits are the following:
+
+•	Gini Index: It is considered a measure of node purity.
+		K
+		∑︂
+	Gm =	    pˆmk (︁1 − pˆmk)︁
+		k=1
+
+	When pˆmk is near a 0 or a 1 (the node contains mostly observations of one class), the term pˆmk (︁1 − pˆmk)︁ is very small. As a consequence, the higher 	the purity of the node, the lower the value of the Gini Index.
+
+•	Classificatioon Error Rate: It is defined as the proportion of observations that do not belong to the most common class in the node.
+	
+ 	Em = 1 − maxk (︁pˆmk)︁
+
+	where pˆmk represents the proportion of observations of the m node that belongs to the k class.
+
+•	Cross Entropy: Entropy is another way of quantifying the disorder of a system. In the case of nodes, disorder corresponds to impurity. If a node is pure, 	containing only observations of one class, its entropy is zero. Conversely, if the frequency of each class is the same, the entropy value reaches the 		maximum value of 1.
+
+		K
+		∑︂
+	D = −		pˆmk log(︁pˆmk)︁
+		k=1
+
+•	Chi-Square: This approach consists of identifying whether there is a significant difference between the child nodes and the parent node, i.e. whether 		there is evidence that the splitting achieves an improvement. The higher the χ2 statistic, the greater the statistical evidence that there is a 		difference.
+	
+	χ2 = ∑︂ (observed k − expected k)︁2
+ 		_________________________
+			expected k
+		k
+
+Having explained the different methods for the selection of optimal splits, we will continue by explaining the recursive binary splitting method. The algorithm used is the following:
+
+1.	The process starts at the top of the tree, where all observations belong to the same region.
+2.	All possible cut-off points s are identified for each of the predictors (X1, X2,..., Xp). In the case of qualitative predictors, the possible cut-off 		points are each of their levels. For continuous predictors, their values are ordered from lowest to highest, the intermediate point between each pair of 	values is used as the cut-off point.
+3.	The total of one of the methods explained above (whichever we choose) that is achieved with each possible division identified in step 1 is calculated.
+4.	We select the predictor Xj and the cut-off point S that gives rise to the most homogeneous splits possible. If there are two or more splits that achieve 	the same improvement, the choice between them is random.
+5.	Steps 1 to 4 are repeated iteratively for each of the regions that have been created in the previous iteration until some stop rule is reached. Some of 	the most used is that no region contains a minimum of n observations, that the tree has a maximum of terminal nodes, or that the incorporation of the 		node reduces the error by at least a minimum %.
+
+Decision Tree with Undersampling
+
+Now that we have explained how Decision Trees work, let’s apply them to our data. We will do this using the function DecisionTreeClassifier from the sklearn.tree package. We can specify many parameters in this function, but in our case we will only need the following:
+
+•	criteria = "gini": The method we use for selecting optimal splits.
+•	random_state = 42: Controls the randomness of the estimator.
+•	max_depth = None : The maximum depth of the tree. In this case (None) the nodes are expanded until we have all pure leaves, or all leaves contain less 		than min_samples_split (the minimum number of samples required to split an internal node) samples. We will use the default value of this parameter which 	is 2.
+•	min_samples_leaf = 5 : The minimum number of samples required to be in a leaf node.
+
+On the other hand, we are going to change the cross-validation for this algorithm, considering now 5 folds in 3 repeats using the same function as for K-NN
+(RepeatedStratifiedKFold). Once this is done, we get an accuracy of 0.968 with a standard deviation of 0.003. The classification report of the model, the confusion matrix and the ROC-AUC curve are shown below.
+
+
+
+
+
+
 
