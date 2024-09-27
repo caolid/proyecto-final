@@ -1,12 +1,9 @@
-Este trabajo de fin de curso se basa en la detección de transferencias bancarias fraudulentas. Tras un exhaustivo análisis exploratorio de los datos, apliqué diferentes algoritmos de machine learning
-y analicé su eficacia en el problema de clasificación.
+This project is based on the detection of fraudulent bank transfers. After an exhaustive exploratory analysis of the data, we will apply different predefined machine learning algorithms and we will see their efficiency in our classification problem. Once they have been used and their theoretical basis explained, we will compare them and draw conclusions from each of them.
 
-Cada observación de los datos es una transferencia bancaria, por lo que la mayoría de ellas son no fraudulentas, 
-lo que nos da unos datos desequilibrados y por ello tuve que realizar un par de técnicas de muestreo para cada algoritmo. 
+Each observation of our data is a bank transfer, so most of them will be non-fraudulent, which gives us unbalanced data and therefore we will perform a couple of different samples for each algorithm. Once applied, we will see the percentage of failure in each class of the response variable and in each type of sampling, which will give us an overall view of their effectiveness.
 
-Debido al gran número de observaciones, además de los algoritmos
-mencionados anteriormente, consideré oportuno completar el estudio
-haciendo uso del deep learning. Creé una red neuronal sencilla que definí como un modelo secuencial.
+Due to the large number of observations available to us, apart from the algorithms mentioned above, we have considered it appropriate to complete our study by making use of deep learning. We will create a neural network that we will define as a sequential model, we will see if it is useful in this problem and we will compare the results with those obtained previously.
+
 
 DESCRIPTION OF THE DATA SET AND ITS VARIABLES
 
@@ -145,4 +142,64 @@ In this chapter we will try to explain how the algorithms we are going to use wo
 
   K-NN: K Nearest Neighbors
 The first algorithm we are going to apply is the well-known K-NN (K Nearest Neighbors). This method is a non-parametric supervised learning algorithm, which uses the proximity between data points to make predictions about the grouping of individual data points. Although it can be applied to regression problems, its most widespread use is in classification problems since similar points can be found close to each other. The basic idea underlying this paradigm is that a new case will be classified in the most frequent class to which its K nearest neighbours belong. The paradigm is therefore based on a very simple and intuitive idea, which together with its easy implementation makes it a very widespread classification algorithm. The only drawback is that it uses the entire data set to find each point and therefore requires a lot of memory and processing resources. Therefore, it tends to work better on small data sets and without a huge number of variables. Let’s see what its theoretical basis is, the notation we are going to use to explain it is the following:
+
+
+		                   X1	    ...	 Xj	   ...	Xn	    C
+
+(x1,c1) ∈ D  	1	     x11	   ...	 x1j	  ...	x1n	   c1
+           	  ...	   ...		  ...		...	  ... ...    ...
+(xi,ci) ∈ D	  i	     xi1	   ...	 xij	  ...	xin	   ci
+           	  ...	   ...		  ...		...	  ... ...    ...
+(xN,cN) ∈ D	  N	     xN1	   ...	 xN j	 ...	xNn	   cN
+
+x	            N + 1	 xN+1,1	...	xN+1,j	...	XN+1,n	?
+
+•	D indicates a file of N cases, each of which is characterised by n predictor variables X1,..., Xn, and a variable to predict, the class C.
+
+•	The N cases are denoted as follows:
+(x1,c1),...,(xN,cN) where xi = (︁xi,1,..., xi,n)︁ ∀ i = 1,..., N ci ∈ {︂c1,...,cm}︂ ∀ i = 1,..., N
+c1,...,cm denote the m possible values for the class C.
+
+•	The new case to classified is denoted as x = (x1,..., xn)
+
+Once we have defined all this, the algorithm process is straightforward. First we calculate the distances from all the cases already classified to the new case, x, which we want to classify. Once we have selected the K cases already classified, DxK closest to the new case x, we assign the value of the most frequent class C among the K objects, DxK.
+
+Here it is shown in a more visible way:
+	Input → D = {(x1,c1),...,(xN,cN)}	Case to classify → x = (x1,..., xn)
+
+For all object already classified (xi,ci) → We calculate di = d (xi,x)
+we sort di in ascending order, keep the K cases DxK already classified that are the closest to x, and assign to x the most frequent class DxK.
+
+The following figure shows 24 cases already classified into two possible values (m = 2). The predictor variables are X1 and X2 and K = 3 has been selected. Of the 3 cases already classified that are closest to x (represented by •), two of them belong to the class ◦, so K-NN predicts the class ◦ for the new case. If we had chosen K = 1, the classifier would have assigned x the class +, which is the closest.
+
+Fig 4. Example of application of the K-NN algorithm
+
+![image](https://github.com/user-attachments/assets/1b46b255-42b3-480d-8bd6-517348395cfa)
+
+
+As can be seen, there are two important things to select before running the algorithm on our data:
+•	The metric we will use to calculate the distance between the query point, x, and the other data points.
+•	The value of K: How many neighbours we will check to determine the classification of the query point.
+
+Having explained how this wonderful machine learning method works, let’s see what results can be obtained by applying it to our data on bank frauds.
+
+
+K-NN with Undersampling
+
+After doing the preprocessing explained in chapter 3, our next step is to do an Undersampling of our data. We set any seed and reduce the majority class (0) to 7.200, which is the number of frauds in our data, using the function RandomUnderSampler from the package imblearn.under_sampling. After doing this, we split our independent variable and the response variable into train and test using the train_test_split function of the sklearn.model_selection package.
+
+We now have our balanced response variable and can start with the model. First, we would like to define the concept of cross-validation, as we will use it throughout the project. Cross-validation is a technique usually used in machine learning to assess the variability of a data set and the reliability of any model trained on it. This is how it works:
+  1.	Cross-validation randomly divides the training data into folds, let’s say 5.
+  2.	The component reserves the data from fold 1 for use in validation and uses the remaining folds to train a model. It generates five models, trains each model      on four fifths of the data, and tests each model on the remaining fifth.
+  3.	During testing of the component for each fold, the module evaluates various accuracy statistics. The statistics used by the component depend on the type of       model being evaluated.
+  4.	When the compilation and evaluation process is completed for all folds, the crossvalidation model generates a set of yield metrics and scored results for         all data.
+
+For this case of K-NN using Undersampling, we will consider a stratified crossvalidation of 10 folds in 5 repeats, using the function RepeatedStratifiedKFold from the sklearn.model_selection package. The fact that it is stratified ensures that each fold of the data has the same proportion of observations with a given label.
+
+Having defined the cross-validation, let’s see what the value of K is going to be. Apart from the choice of the K, we have also found it interesting to find out which are the most influential variables. To do these two things at the same time, we will use a pipeline in which we will include the functions that will select the variables, SelectKBest(f_regression) (both of them from the package sklearn.feature_selection), and the one that will get the optimal number of neighbours, KNeighborsRegressor from the package sklearn.neighbors. Then, using a Grid Search, we will evaluate everything in our training set and obtain the desired values.
+These are:
+  •	K = 5
+  •	Features = 4: Gender, Merchant, Category and Amount.
+
+We now have the K, all that remains is to run the model and evaluate it on the test data. Once this is done we get an accuracy of 0.922 with a standard deviation of 0.007. The classification report of the model, the confusion matrix and the ROC-AUC curve are shown below.
 
