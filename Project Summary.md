@@ -220,8 +220,8 @@ K-NN with Over-and-Undersampling
 
 Having seen how K-NN works with Undersampling, let’s now see if the results are improved by applying a combination of Over-and-Undersampling (in this case, for all algorithms, the division into train and test shall be done before sampling). To do this, we will use the Pipeline function from the imblearn.pipeline package. For the Undersampling we will use the aforementioned function, and the Oversampling will be done with the SMOTE function from the imblearn.over_sampling package. Within the pipeline we will include these two sampling and the K-NN model. This works as follows:
 
-	1.	Apply SMOTE to give give the minority class 5% of the size of the majority class.
-	2.	Using RandomUnderSampler we reduce the majority class to 50% more than the minority class.
+1.	Apply SMOTE to give give the minority class 5% of the size of the majority class.
+2.	Using RandomUnderSampler we reduce the majority class to 50% more than the minority class.
  
 In this case, due to the large number of observations we have, we will use a crossvalidation of 5 folds and 3 repeats. After running the Pipeline, we get an accuracy of 0.942 with a standard deviation of 0.004 (a bit better than in the Undersampling section).
 
@@ -281,7 +281,7 @@ When pˆmk is near a 0 or a 1 (the node contains mostly observations of one clas
 
 •	Classificatioon Error Rate: It is defined as the proportion of observations that do not belong to the most common class in the node.
 	
- 	Em = 1 − maxk (︁pˆmk)︁
+ Em = 1 − maxk (︁pˆmk)︁
 
 where pˆmk represents the proportion of observations of the m node that belongs to the k class.
 
