@@ -277,13 +277,13 @@ The aim of this method is to find in each iteration the predictor Xj and the cut
 	Gm =	    pˆmk (︁1 − pˆmk)︁
 		k=1
 
-	When pˆmk is near a 0 or a 1 (the node contains mostly observations of one class), the term pˆmk (︁1 − pˆmk)︁ is very small. As a consequence, the higher 	the purity of the node, the lower the value of the Gini Index.
+When pˆmk is near a 0 or a 1 (the node contains mostly observations of one class), the term pˆmk (︁1 − pˆmk)︁ is very small. As a consequence, the higher 	the purity of the node, the lower the value of the Gini Index.
 
 •	Classificatioon Error Rate: It is defined as the proportion of observations that do not belong to the most common class in the node.
 	
  	Em = 1 − maxk (︁pˆmk)︁
 
-	where pˆmk represents the proportion of observations of the m node that belongs to the k class.
+where pˆmk represents the proportion of observations of the m node that belongs to the k class.
 
 •	Cross Entropy: Entropy is another way of quantifying the disorder of a system. In the case of nodes, disorder corresponds to impurity. If a node is pure, 	containing only observations of one class, its entropy is zero. Conversely, if the frequency of each class is the same, the entropy value reaches the 		maximum value of 1.
 
