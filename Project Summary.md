@@ -319,9 +319,130 @@ Now that we have explained how Decision Trees work, let’s apply them to our da
 On the other hand, we are going to change the cross-validation for this algorithm, considering now 5 folds in 3 repeats using the same function as for K-NN
 (RepeatedStratifiedKFold). Once this is done, we get an accuracy of 0.968 with a standard deviation of 0.003. The classification report of the model, the confusion matrix and the ROC-AUC curve are shown below.
 
+TABLE CLASSIFICATION REPORT FOR DECISSION TREE CLASSIFIER (UNDERSAMPLING)
+
+			Precision	Recall	f1-Score	Support
+0			0.97		0.97	0.97		1455
+1			0.97		0.97	0.97		1425
+Accuracy					0.97		2880
+Macro Average		0.97		0.97	0.97		2880
+Weighted Average	0.97		0.97	0.97		2880
+
+Fig. ROC-AUC Curve Decission Tree Classifier (Undersampling)  Fig. Confusion Matrix Decission Tree Classifier (Undersampling)
+
+![image](https://github.com/user-attachments/assets/3eb8ecce-7909-46ee-988e-e976e950e737)
+		
+As can be seen, the results are extremely good. The failure rate is very small in both classes, with the 1 failing the least. It can also be seen from the table above that we have a very high recall and accuracy for both classes.
+
+TABLE PERCENTAGE OF FAILURE IN DECISION TREE
+
+Class	Undersampling
+0	3.44%
+1	2.67%
+
+Due to the high number of observations when doing Over-and-Undersampling, Python is not able to create a tree. It only creates one when we set the minimum number of samples required to be in a leaf node and to split an internal node too high. When it does, it predicts all zeros as zeros, but fails to predict any one as one. This is why we have not considered it appropriate to include it in this project.
+
+Random Forest Classifier
+
+A Random Forest model consists of an ensemble of individual decision trees, each trained on a random sample drawn from the original training data by bootstrapping. This implies that each tree is trained on slightly different data. In each individual tree, the observations are distributed along nodes generating the tree structure until a terminal node is reached. The prediction of a new observation is obtained by aggregating the predictions of all the individual trees that make up the model.
+
+To understand how Random Forest models work, it is first necessary to understand the concepts of ensemble and bagging.
+
+In general, small trees (few branches) have low variance but fail to represent the relationship between variables well, i.e. they have high bias. In contrast, large trees are very close to the training data, so they have very low bias but high variance. One way to solve this problem is ensemble methods.
+Ensemble methods combine multiple models into a new model with the aim of achieving a balance between bias and variance, thus achieving better predictions than any of the original individual models. Two of the most commonly used types of ensemble are:
+
+•	Boosting: Multiple simple models, called weak learners, are fitted sequentially so that each model learns from the errors of the previous one. As a final 	value, the mean of all predictions (continuous variables) or the most frequent class (qualitative variables) is taken.
+•	Bagging: Multiple models are fitted, each with a different subset of the training data. To predict, all models that make up the aggregate participate by 	contributing their prediction. As a final value, as in boosting, the mean of all predictions (continuous variables) or the most frequent class 			(qualitative variables) is taken. Random Forest models fall into this category.
+
+In the case of Decision Trees, given their low bias and high variance nature, bagging has proven to have very good results. The way to apply it is:
+
+1.	Generate B pseudo-training sets by bootstrapping from the original training sample.
+2.	Train a tree with each of the B samples from step 1. Each tree is created with almost no constraints and is not pruned, so it has high variance but 		little bias. In most cases, the only stopping rule is the minimum number of observations that the terminal nodes must have. The optimal value of this 		hyperparameter can be obtained by comparing the out-of-bag error or by cross-validation.
+3.	For each new observation, obtain the prediction of each of the B trees. The final prediction value is obtained as the mean of the B predictions in the 		case of quantitative variables and as the most frequent predicted class for qualitative variables.
+	In the bagging process, the number of trees created is not a critical hyperparameter in that, no matter how much the number is increased, the risk of 		overfitting is not increased. Once a certain number of trees is reached, the test error reduction stabilizes. However, each tree takes up memory, so it 	is not advisable to store more than necessary.
+
+The Random Forest algorithm is a modification of the bagging process that achieves improved results by further decorrelating the trees generated in the process.
+
+If we have a data set with a predictor that is very influential over the others, all the trees created in the bagging process will be dominated by the same predictor and will be very similar to each other. Therefore, due to the correlation between the trees, this process will hardly decrease the variance or improve the model. Random Forest avoids this problem by making a random selection of m predictors before evaluating each split. In this way, an average of (p − m)/p (where p is the number of predictors) splits will not consider the influential predictor, allowing other predictors to be selected. The difference in the result will depend on the value m chosen. If m = p the Random Forest and bagging results are equivalent. As said before, the best way to find the optimal value of m is to evaluate the out-of-bag error or to resort to cross-validation.
+
+Random Forest Classifier with Undersampling
+
+In order to apply this algorithm we are going to use the RandomForestClassifier function that we can find in the sklearn.ensemble package. The parameters we are going to specify in this function are the following. In all others we will use its default value.
+
+•	n_estimators = 300: The number of trees in the forest.
+•	max_depth = 8: The maximum depth of the tree
+•	random_state = 42: Controls the randomness of the bootstrapping of the samples used building the trees and the sampling of the features.
+•	verbose = 1: Controls the verbosity when fitting and predicting.
+•	class_weight = balanced: All the classes are supposed to have weight one since it is not given in our data. In this case, the balanced mode adjust 		weights inversely proportional to class frequencies in the input data.
+•	n_jobs = −1: The number of jobs to run in parallel, −1 indicates that we use all processors.
+	As in the case of decision trees, we will use a 5 fold cross validation on 3 repeats. Once the method is applied, we obtain an accuracy of 0.971 with a 	standard deviation of 0.002. Let’s see how the classification report, the confusion matrix and the ROC-AUC curve look like.
+
+TABLE CLASSIFICATION REPORT FOR RANDOM FOREST CLASSIFIER (UNDERSAMPLING)
+
+			Precision	Recall	f1-Score	Support
+0			0.99		0.96	0.97		1455
+1			0.96		0.99	0.97		1425
+Accuracy					0.97		2880
+Macro Average		0.97		0.97	0.97		2880
+Weighted Average	0.97		0.97	0.97		2880
+
+Fig. ROC-AUC Curve Random Forest Classifier (Undersampling)   Fig. Confusion Matrix Random Forest Classifier (Undersampling)
+
+![image](https://github.com/user-attachments/assets/5072feab-376c-419a-88b8-f8d5c2a90048)
 
 
+Random Forest Classifier with Over-and-Undersampling
+
+As in the K-NN section, we will use the Pipeline function to combine both Over and Undersampling. For this model we set this:
+
+1.	Apply SMOTE to give the minority class 6% of the size of the majority class.
+2.	Using RandomUnderSampler we reduced the majority class to 50% more than the minority class.
+
+The cross validation strategy is the same as in the Undersampling case and we change the n_estimators to 100 which is its default value. After applying it we obtain an accuracy of 0.995 with an standard deviation of 0.0004. The results when applying the method in the test data are shown below.
+
+TABLE CLASSIFICATION REPORT FOR RANDOM FOREST CLASSIFIER (OVER-AND-UNDERSAMPLING)
+
+			Precision	Recall	f1-Score	Support
+0			1.00		0.96	0.98		117461
+1			0.24		0.98	0.38		1468
+Accuracy					0.96		118929
+Macro Average		0.62		0.97	0.68		118929
+Weighted Average	0.99		0.96	0.97		118929
+
+Fig. ROC-AUC Curve Random Forest Classifier(Over-and-Undersampling)        Fig. Confusion Matrix Random Forest Classifier (Over-and-Undersampling)
+
+![image](https://github.com/user-attachments/assets/80b7fb09-bc68-4cb3-b532-19de55b3bd58)
 
 
+Now that we have the two results using different types of sampling, let’s compare them. As we did for the two previous algorithms, the following table shows the percentage of failures in each class.
+
+TABLE PERCENTAGE OF FAILURE IN RANDOM FOREST CLASSIFIER
+
+Class	Undersampling	Over-and-Undersampling
+0	3.99%		3.91%
+1	1.12%		1.70%
+
+All the results are really good. You can see how the recall is extremely good for the ones using both types of sampling, and the ROC-AUC curve is hardly noticeable in the graph, which is an indication that the models work very well. On the other hand, if we look at the failure rate table, we can see that the failure rate is very low for both samples and for both zeros and ones. It seems that Undersampling works somewhat better for ones and somewhat worse for zeros, but since using Over-and-Undersampling the number of observations is quite high, we would stick with this type of sampling for this model. Moreover, the loss of information produced by Undersampling is an additional incentive to use Over-and-Undersampling.
+
+In Summary
+
+Once we have run all our algorithms, we summarize the results in this table. Let’s see what interesting information we can extract from it.
+
+TABLE PERCENTAGE OF FAILURE OF ALL ALGORITHMS
+
+Sampling		Undersampling		Over-and-Undersampling		Mean	
+Class			0	1	Total	0	1	Total		0	1	Total
+KNN			3.44%	11.86%	7.65%	3.10%	12.87%	7.99%		3.27%	12.37%	7.82%
+Decission Tree		3.44%	2.67%	3.06%					3.44%	2.67%	3.06%
+Random Forest		3.99%	1.12%	2.56%	3.91%	1.70%	2.81%		3.95%	1.41%	2.68%
+Mean			4.00%	3.95%	3.98%	3.60%	5.78%	4.69%		3.82%	4.48%	4.15%
+
+First, the last 4.15% box shows the total failure rate, taking into account all methods, the two types of sampling and the two classes. This percentage is 4.15%, which is really good, we have only failed a little more than 1 out of 25 predictions. Let’s see now which method works best.
+
+A priori, we have the lowest failure rate using Random Forest and it is only 2.68%. Looking at the table, although the failure rate on zeros is not the best, the percentage detecting frauds is the best of all, with only 1.41% of the ones predicted as zeros. Despite this being the best method now, special mention must be made of the Decission Tree. It is also true that in Decission Tree we have considered only Undersampling and this greatly improves the failure rate with respect to the others.
+
+As to which type of sampling is better, we have the failure rate using Undersampling and in cyan using Overand-Undersampling. As expected, the percentage is better using Undersampling, but not much better, they only differ by 0.71%. Considering that the number of observations to be classified using Over-and-Undersampling is about 80 times higher than those classified using Undersampling and knowing beforehand the huge loss of information that using Undersampling alone entails, we can conclude that the second type of sampling has worked very well, giving us really encouraging results. Random Forest is again the best performing algorithm for both sampling.
+
+At this point, we can say that the failure rate is good, but it could have been better if K-NN had worked in a more optimal way. This algorithm clearly fails in predicting frauds, having a failure rate in both samples higher than 10%, which is not bad at all, but it is certainly much worse than in the other algorithms, where the highest failure rate in predicting ones is 2.76% in XGBoost using Over-and-Undersampling.
 
 
