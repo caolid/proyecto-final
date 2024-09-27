@@ -137,34 +137,3 @@ cm = confusion_matrix(y_test, y_pred_RF)
 plot_confusion_matrix(cm,class_names)
 
 
-# XGBOOST CLASSIFIER
-# define model
-model_XGB =   xgb.XGBClassifier(max_depth=6, learning_rate=0.003, n_estimators=486, 
-                                objective="binary:hinge", booster='gbtree', 
-                                n_jobs=-1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0, 
-                                subsample=0.9, colsample_bytree=0.9, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, 
-                                 base_score=0.5, random_state=42)
-
-
-# define evaluation procedure
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=1)
-
-#define pipeline
-over_XGB = SMOTE(sampling_strategy=0.1) # minority class=10% of the mayority class
-under_XGB = RandomUnderSampler(sampling_strategy=0.5) # majority class down to 50 percent
-steps_XGB = [('o', over_XGB), ('u', under_XGB), ('m', model_XGB)]
-clf_XGB = Pipeline(steps=steps_XGB)
-
-clf_XGB = clf_XGB.fit(X_train, y_train)
-
-# evaluate model
-scores_XGB = cross_val_score(clf_XGB, X_train, y_train, scoring='roc_auc', cv=cv, n_jobs=-1)
-
-y_pred_XGB = clf_XGB.predict(X_test)
-
-print("\n Classification Report for K-Nearest Neighbours: \n",
-      classification_report(y_test, y_pred_XGB))
-plot_roc_auc(y_test, clf_XGB.predict_proba(X_test)[:,1])
-
-cm = confusion_matrix(y_test, y_pred_XGB)
-plot_confusion_matrix(cm,class_names)
